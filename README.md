@@ -2,7 +2,7 @@
 
 Een webapp om je werkrooster, gewerkte uren en nachttoeslag bij te houden.
 
-🔗 **Live:** [https://jouwdomein.nl](https://jouwdomein.nl) <!-- TODO: vervang door je eigen domein -->
+🔗 **Live:** [https://shift-tracker-amber.vercel.app/](https://shift-tracker-xxxx.vercel.app) 
 
 <!-- TODO: voeg een screenshot toe zodra de app draait -->
 <!-- ![Screenshot van de app](docs/screenshot.png) -->
