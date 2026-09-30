@@ -40,7 +40,7 @@ Daarom bouw ik deze app: een probleem uit mijn eigen werk, en tegelijk een manie
 |-----------|-------------|
 | Framework | Next.js (App Router) + TypeScript |
 | Backend | Next.js Server Actions en Route Handlers |
-| Database | PostgreSQL + Prisma |
+| Database | PostgreSQL + Prisma (ORM) |
 | Authenticatie | Auth.js |
 | Styling | Tailwind CSS |
 | Tests | Vitest |
