@@ -11,3 +11,19 @@ generator client {
 datasource db {
   provider = "postgresql"
 }
+
+enum ShiftStatus {
+  PLANNED
+  WORKED
+}
+
+model Shift {
+  id           String      @id @default(cuid())
+  startTime    DateTime
+  endTime      DateTime
+  breakMinutes Int         @default(0)
+  status       ShiftStatus @default(PLANNED)
+  note         String?
+  createdAt    DateTime    @default(now())
+  updatedAt    DateTime    @updatedAt
+}
