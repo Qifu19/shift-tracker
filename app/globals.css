@@ -1,26 +1,42 @@
 @import "tailwindcss";
 
-:root {
-  --background: #ffffff;
-  --foreground: #171717;
+/*
+  Het "systeemvenster"-thema. Elke kleur hier wordt automatisch een
+  Tailwind-klasse: --color-glow geeft bijvoorbeeld text-glow, bg-glow
+  en border-glow.
+*/
+@theme {
+  --color-void: #05070d;
+  --color-panel: #0b1424;
+  --color-panel-raised: #12233a;
+  --color-line: #1e3a5c;
+  --color-track: #1a2c45;
+  --color-ink: #e6f4ff;
+  --color-soft: #b8cde0;
+  --color-muted: #8fb3cf;
+  --color-glow: #3fb8ff;
+  --color-gold: #ffc857;
+  --color-warn: #ff8a5b;
+  --color-warn-panel: #1a1210;
+
+  --font-display: var(--font-chakra), sans-serif;
+  --font-mono: var(--font-jetbrains), monospace;
+
+  --shadow-glow: 0 0 16px rgb(63 184 255 / 0.25);
+  --shadow-glow-strong: 0 0 20px rgb(63 184 255 / 0.45);
 }
 
-@theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
-}
-
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+html {
+  color-scheme: dark;
 }
 
 body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  background: var(--color-void);
+  color: var(--color-ink);
+}
+
+/* Een duidelijke focusrand voor wie met het toetsenbord navigeert. */
+:focus-visible {
+  outline: 2px solid var(--color-glow);
+  outline-offset: 2px;
 }
