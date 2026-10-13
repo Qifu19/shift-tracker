@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { prisma } from "@/lib/prisma";
+import { requireUser } from "@/lib/auth";
 import { echoMessage, levelFromHours, rankForLevel, titleFor } from "@/lib/game";
 import { formatEuro, formatHours, formatLocal, monthRange, round2, shiftPay } from "@/lib/shifts";
 import { Avatar } from "@/components/system/Avatar";
@@ -10,10 +11,15 @@ import { Screen } from "@/components/system/Screen";
 export const dynamic = "force-dynamic";
 
 export default async function StatusPage() {
+  const user = await requireUser();
   const now = new Date();
   const { start, end } = monthRange(now);
 
-  const shifts = await prisma.shift.findMany({ orderBy: { startTime: "asc" } });
+  // Alleen de diensten van de ingelogde speler.
+  const shifts = await prisma.shift.findMany({
+    where: { userId: user.id },
+    orderBy: { startTime: "asc" },
+  });
 
   // Speler: level en titel over al je gewerkte diensten ooit.
   const worked = shifts.filter((s) => s.status === "WORKED");
@@ -49,7 +55,7 @@ export default async function StatusPage() {
           <Avatar rank={rank} />
           <div className="flex min-w-0 flex-1 flex-col gap-1">
             <Label>SPELER</Label>
-            <span className="text-[22px] font-bold leading-tight">Speler</span>
+            <span className="truncate text-[22px] font-bold leading-tight">{user.name}</span>
             <span className="text-[13px] text-muted">
               Titel: <span className="text-gold">{title}</span>
             </span>
@@ -102,7 +108,9 @@ export default async function StatusPage() {
           <p className="text-sm text-soft">Nog geen quests deze maand. Voeg je rooster toe om de maandquest te starten.</p>
         ) : (
           <>
-            <span className="text-base font-semibold">Voltooi {month.length} diensten</span>
+            <span className="text-base font-semibold">
+              Voltooi {month.length} {month.length === 1 ? "dienst" : "diensten"}
+            </span>
             <SegmentBar
               done={monthWorked.length}
               total={month.length}

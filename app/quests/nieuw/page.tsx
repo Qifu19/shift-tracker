@@ -1,11 +1,14 @@
 import Link from "next/link";
+import { requireUser } from "@/lib/auth";
 import { localDate } from "@/lib/shifts";
 import { Screen } from "@/components/system/Screen";
 import { QuestForm } from "./QuestForm";
 
 export const dynamic = "force-dynamic";
 
-export default function NewQuestPage() {
+export default async function NewQuestPage() {
+  await requireUser();
+
   return (
     <Screen nav={false}>
       <header className="flex h-11 items-center justify-between">

@@ -3,6 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { prisma } from "@/lib/prisma";
+import { requireUser } from "@/lib/auth";
 import { toShiftMoments, workedMinutes } from "@/lib/shifts";
 
 export type QuestFormState = { error?: string };
@@ -16,6 +17,7 @@ const TIME = /^\d{2}:\d{2}$/;
  * plaats van een foutpagina; bij succes sturen we je door naar de questlog.
  */
 export async function createQuest(_prev: QuestFormState, formData: FormData): Promise<QuestFormState> {
+  const user = await requireUser();
   const date = String(formData.get("date") ?? "");
   const start = String(formData.get("start") ?? "");
   const end = String(formData.get("end") ?? "");
@@ -36,7 +38,7 @@ export async function createQuest(_prev: QuestFormState, formData: FormData): Pr
   }
 
   await prisma.shift.create({
-    data: { startTime, endTime, breakMinutes, status, note },
+    data: { startTime, endTime, breakMinutes, status, note, userId: user.id },
   });
 
   revalidatePath("/");
@@ -46,8 +48,12 @@ export async function createQuest(_prev: QuestFormState, formData: FormData): Pr
 
 /** Zet een geplande quest op voltooid. */
 export async function completeQuest(id: string) {
-  await prisma.shift.update({
-    where: { id },
+  const user = await requireUser();
+
+  // updateMany met userId erbij: zo kan niemand andermans dienst aanpassen,
+  // ook niet als hij het id van die dienst raadt.
+  await prisma.shift.updateMany({
+    where: { id, userId: user.id },
     data: { status: "WORKED" },
   });
 

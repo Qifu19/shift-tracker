@@ -1,4 +1,5 @@
 import { prisma } from "@/lib/prisma";
+import { requireUser } from "@/lib/auth";
 import type { Shift } from "@/generated/prisma/client";
 import { addDays, formatEuro, formatLocal, isNightShift, localDate, monthRange, shiftPay } from "@/lib/shifts";
 import { EchoMessage } from "@/components/system/Echo";
@@ -9,11 +10,12 @@ import { completeQuest } from "./actions";
 export const dynamic = "force-dynamic";
 
 export default async function QuestsPage() {
+  const user = await requireUser();
   const now = new Date();
   const { start, end } = monthRange(now);
 
   const shifts = await prisma.shift.findMany({
-    where: { startTime: { gte: start, lt: end } },
+    where: { userId: user.id, startTime: { gte: start, lt: end } },
     orderBy: { startTime: "asc" },
   });
 

@@ -2,7 +2,7 @@
 
 Een webapp om je werkrooster, gewerkte uren en nachttoeslag bij te houden.
 
-🔗 **Live:** [https://shift-tracker-amber.vercel.app/](https://shift-tracker-xxxx.vercel.app) 
+🔗 **Live:** [https://shift-tracker-amber.vercel.app/](https://shift-tracker-amber.vercel.app/) 
 
 <!-- TODO: voeg een screenshot toe zodra de app draait -->
 <!-- ![Screenshot van de app](docs/screenshot.png) -->
@@ -15,13 +15,13 @@ Daarom bouw ik deze app: een probleem uit mijn eigen werk, en tegelijk een manie
 
 ## Functionaliteit
 
-- [ ] Account aanmaken en inloggen
-- [ ] Rooster invoeren: geplande diensten (datum, begintijd, eindtijd, pauze)
+- [x] Account aanmaken en inloggen
+- [x] Rooster invoeren: geplande diensten (datum, begintijd, eindtijd, pauze)
 - [ ] Diensten markeren als gewerkt, met de werkelijke tijden
-- [ ] Overzicht van gewerkte uren per week en per maand
+- [x] Overzicht van gewerkte uren per week en per maand
 - [ ] Automatische berekening van nachttoeslag met instelbare regels
-- [ ] Salarisoverzicht: bruto verdiend tot nu toe deze maand
-- [ ] Prognose: verwacht bruto maandtotaal als alle geplande diensten gewerkt worden
+- [x] Salarisoverzicht: bruto verdiend tot nu toe deze maand
+- [x] Prognose: verwacht bruto maandtotaal als alle geplande diensten gewerkt worden
 - [ ] Agenda-koppeling: rooster als abonnement in de iPhone-agenda (iCal-feed)
 - [ ] Export naar CSV
 
@@ -41,7 +41,7 @@ Daarom bouw ik deze app: een probleem uit mijn eigen werk, en tegelijk een manie
 | Framework | Next.js (App Router) + TypeScript |
 | Backend | Next.js Server Actions en Route Handlers |
 | Database | PostgreSQL + Prisma (ORM) |
-| Authenticatie | Auth.js |
+| Authenticatie | Better Auth (e-mail en wachtwoord) |
 | Styling | Tailwind CSS |
 | Tests | Vitest |
 | Hosting | Vercel |

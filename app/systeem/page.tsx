@@ -1,4 +1,6 @@
+import { requireUser } from "@/lib/auth";
 import { PAY_SETTINGS, formatEuro } from "@/lib/shifts";
+import { signOut } from "@/app/auth-actions";
 import { HOURS_PER_LEVEL } from "@/lib/game";
 import { Echo } from "@/components/system/Echo";
 import { Label, Panel } from "@/components/system/Panel";
@@ -7,7 +9,8 @@ import { Screen } from "@/components/system/Screen";
 // Voorlopig alleen-lezen: de instellingen staan nog vast in lib/shifts.ts.
 // Zodra er een Settings-tabel in de database is, worden dit invulvelden.
 
-export default function SystemPage() {
+export default async function SystemPage() {
+  const user = await requireUser();
   const { hourlyWage, nightBonus, nightStartHour, nightEndHour } = PAY_SETTINGS;
   const pad = (n: number) => String(n).padStart(2, "0");
 
@@ -17,6 +20,22 @@ export default function SystemPage() {
         <Label className="text-glow">[ CONFIGURATIE ]</Label>
         <h1 className="text-[28px] font-bold">Systeem</h1>
       </header>
+
+      <h2 className="mt-1"><Label>ACCOUNT</Label></h2>
+      <Panel className="flex flex-col gap-3 p-3.5">
+        <div className="flex flex-col gap-0.5">
+          <span className="font-semibold">{user.name}</span>
+          <span className="truncate font-mono text-xs text-muted">{user.email}</span>
+        </div>
+        <form action={signOut}>
+          <button
+            type="submit"
+            className="h-11 w-full rounded border border-warn font-mono text-xs font-bold tracking-[0.14em] text-warn hover:bg-warn-panel"
+          >
+            UITLOGGEN
+          </button>
+        </form>
+      </Panel>
 
       <h2 className="mt-1"><Label>LOON</Label></h2>
       <Panel className="flex min-h-[52px] items-center justify-between px-3.5">
