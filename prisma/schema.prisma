@@ -32,6 +32,19 @@ model Shift {
   @@index([userId, startTime])
 }
 
+// De loon-instellingen van één gebruiker. Geen rij = standaardwaarden.
+// Bedragen in centen en de toeslag als heel percentage, om afrondingsfouten
+// met kommagetallen te voorkomen.
+model PaySettings {
+  userId            String   @id
+  user              User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  hourlyWageCents   Int
+  nightBonusPercent Int
+  nightStartHour    Int
+  nightEndHour      Int
+  updatedAt         DateTime @updatedAt
+}
+
 model User {
   id            String    @id
   name          String
@@ -43,6 +56,7 @@ model User {
   sessions      Session[]
   accounts      Account[]
   shifts        Shift[]
+  paySettings   PaySettings?
 
   @@unique([email])
   @@map("user")

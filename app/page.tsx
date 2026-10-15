@@ -1,8 +1,9 @@
 import Link from "next/link";
 import { prisma } from "@/lib/prisma";
 import { requireUser } from "@/lib/auth";
+import { getPaySettings } from "@/lib/settings";
 import { echoMessage, levelFromHours, rankForLevel, titleFor } from "@/lib/game";
-import { formatEuro, formatHours, formatLocal, monthRange, round2, shiftPay } from "@/lib/shifts";
+import { formatEuro, formatHours, formatLocal, monthRange, round2, shiftPay, type PaySettings } from "@/lib/shifts";
 import { Avatar } from "@/components/system/Avatar";
 import { EchoMessage } from "@/components/system/Echo";
 import { Label, Panel, SegmentBar } from "@/components/system/Panel";
@@ -16,23 +17,23 @@ export default async function StatusPage() {
   const { start, end } = monthRange(now);
 
   // Alleen de diensten van de ingelogde speler.
-  const shifts = await prisma.shift.findMany({
-    where: { userId: user.id },
-    orderBy: { startTime: "asc" },
-  });
+  const [shifts, settings] = await Promise.all([
+    prisma.shift.findMany({ where: { userId: user.id }, orderBy: { startTime: "asc" } }),
+    getPaySettings(user.id),
+  ]);
 
   // Speler: level en titel over al je gewerkte diensten ooit.
   const worked = shifts.filter((s) => s.status === "WORKED");
-  const totalHours = worked.reduce((sum, s) => sum + shiftPay(s).workedHours, 0);
+  const totalHours = worked.reduce((sum, s) => sum + shiftPay(s, settings).workedHours, 0);
   const { level, exp, expNeeded } = levelFromHours(totalHours);
   const rank = rankForLevel(level);
-  const title = titleFor(worked);
+  const title = titleFor(worked, settings);
 
   // Deze maand: verdiend, prognose en de maandquest.
   const month = shifts.filter((s) => s.startTime >= start && s.startTime < end);
   const monthWorked = month.filter((s) => s.status === "WORKED");
   const sum = (list: typeof shifts, pick: (p: ReturnType<typeof shiftPay>) => number) =>
-    round2(list.reduce((total, s) => total + pick(shiftPay(s)), 0));
+    round2(list.reduce((total, s) => total + pick(shiftPay(s, settings)), 0));
 
   const earned = sum(monthWorked, (p) => p.total);
   const bonus = sum(monthWorked, (p) => p.bonus);
@@ -41,7 +42,7 @@ export default async function StatusPage() {
   const forecast = sum(month, (p) => p.total);
 
   const next = shifts.find((s) => s.status === "PLANNED" && s.startTime >= now);
-  const echo = echoMessage(next, now);
+  const echo = echoMessage(next, now, settings);
   const monthName = formatLocal(now, "MMMM").toUpperCase();
 
   return (
@@ -128,7 +129,7 @@ export default async function StatusPage() {
         )}
       </Panel>
 
-      {next && <NextQuest shift={next} />}
+      {next && <NextQuest shift={next} settings={settings} />}
     </Screen>
   );
 }
@@ -142,8 +143,14 @@ function Stat({ label, value, gold = false }: { label: string; value: string; go
   );
 }
 
-function NextQuest({ shift }: { shift: { startTime: Date; endTime: Date; breakMinutes: number } }) {
-  const pay = shiftPay(shift);
+function NextQuest({
+  shift,
+  settings,
+}: {
+  shift: { startTime: Date; endTime: Date; breakMinutes: number };
+  settings: PaySettings;
+}) {
+  const pay = shiftPay(shift, settings);
   return (
     <Link
       href="/quests"

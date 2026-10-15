@@ -7,16 +7,21 @@ import { nl } from "date-fns/locale";
 
 export const TIME_ZONE = "Europe/Amsterdam";
 
-// Voorlopig vaste instellingen. Later komen deze uit de database,
-// zodat je ze op het Systeem-scherm kunt aanpassen.
-export const PAY_SETTINGS = {
+export type PaySettings = {
+  hourlyWage: number; // in euro's, bijv. 15
+  nightBonus: number; // als fractie, bijv. 0.3 voor +30%
+  nightStartHour: number; // 0–23
+  nightEndHour: number; // 0–23
+};
+
+// De standaardinstellingen voor iemand die nog niets heeft ingesteld.
+// Je eigen instellingen staan in de database (zie lib/settings.ts).
+export const DEFAULT_PAY_SETTINGS: PaySettings = {
   hourlyWage: 15,
-  nightBonus: 0.3, // +30%
+  nightBonus: 0.3,
   nightStartHour: 22,
   nightEndHour: 6,
 };
-
-export type PaySettings = typeof PAY_SETTINGS;
 
 export type ShiftTimes = {
   startTime: Date;
@@ -76,6 +81,7 @@ export function workedMinutes(shift: ShiftTimes) {
 
 /**
  * Minuten binnen het nachtvenster (standaard 22:00–06:00, Amsterdamse tijd).
+ * Het venster komt uit je instellingen.
  *
  * Werkt per kalendernacht: voor elke nacht die de dienst kan raken, maken we
  * het venster als echte momenten aan en tellen we de overlap. Omdat
@@ -84,7 +90,7 @@ export function workedMinutes(shift: ShiftTimes) {
  *
  * Aanname: de pauze valt in de nacht, dus die gaat van de nachtminuten af.
  */
-export function nightMinutes(shift: ShiftTimes, settings: PaySettings = PAY_SETTINGS) {
+export function nightMinutes(shift: ShiftTimes, settings: PaySettings = DEFAULT_PAY_SETTINGS) {
   const start = shift.startTime.getTime();
   const end = shift.endTime.getTime();
   const pad = (n: number) => String(n).padStart(2, "0");
@@ -95,7 +101,10 @@ export function nightMinutes(shift: ShiftTimes, settings: PaySettings = PAY_SETT
 
   for (let day = firstDay; day <= lastDay; day = addDays(day, 1)) {
     const windowStart = fromZonedTime(`${day}T${pad(settings.nightStartHour)}:00`, TIME_ZONE).getTime();
-    const windowEnd = fromZonedTime(`${addDays(day, 1)}T${pad(settings.nightEndHour)}:00`, TIME_ZONE).getTime();
+    // Begint het venster vóór middernacht (bijv. 22:00–06:00), dan eindigt het
+    // de volgende dag. Anders (bijv. 00:00–06:00) valt het binnen één dag.
+    const endDay = settings.nightEndHour <= settings.nightStartHour ? addDays(day, 1) : day;
+    const windowEnd = fromZonedTime(`${endDay}T${pad(settings.nightEndHour)}:00`, TIME_ZONE).getTime();
     overlap += Math.max(0, Math.min(end, windowEnd) - Math.max(start, windowStart));
   }
 
@@ -112,7 +121,7 @@ export type ShiftPay = {
 };
 
 /** Brutoloon van één dienst, opgesplitst in basis en nachttoeslag. */
-export function shiftPay(shift: ShiftTimes, settings: PaySettings = PAY_SETTINGS): ShiftPay {
+export function shiftPay(shift: ShiftTimes, settings: PaySettings = DEFAULT_PAY_SETTINGS): ShiftPay {
   const workedHours = workedMinutes(shift) / 60;
   const nightHours = nightMinutes(shift, settings) / 60;
   const base = round2(workedHours * settings.hourlyWage);
@@ -121,9 +130,9 @@ export function shiftPay(shift: ShiftTimes, settings: PaySettings = PAY_SETTINGS
 }
 
 /** Een dienst telt als nachtdienst als minstens de helft in de nacht valt. */
-export function isNightShift(shift: ShiftTimes) {
+export function isNightShift(shift: ShiftTimes, settings: PaySettings = DEFAULT_PAY_SETTINGS) {
   const worked = workedMinutes(shift);
-  return worked > 0 && nightMinutes(shift) >= worked / 2;
+  return worked > 0 && nightMinutes(shift, settings) >= worked / 2;
 }
 
 export function round2(value: number) {

@@ -1,18 +1,27 @@
 import { requireUser } from "@/lib/auth";
-import { PAY_SETTINGS, formatEuro } from "@/lib/shifts";
+import { prisma } from "@/lib/prisma";
+import { getPaySettings } from "@/lib/settings";
+import { monthRange } from "@/lib/shifts";
 import { signOut } from "@/app/auth-actions";
+import { PaySettingsForm } from "./PaySettingsForm";
 import { HOURS_PER_LEVEL } from "@/lib/game";
 import { Echo } from "@/components/system/Echo";
 import { Label, Panel } from "@/components/system/Panel";
 import { Screen } from "@/components/system/Screen";
 
-// Voorlopig alleen-lezen: de instellingen staan nog vast in lib/shifts.ts.
-// Zodra er een Settings-tabel in de database is, worden dit invulvelden.
+export const dynamic = "force-dynamic";
 
 export default async function SystemPage() {
   const user = await requireUser();
-  const { hourlyWage, nightBonus, nightStartHour, nightEndHour } = PAY_SETTINGS;
-  const pad = (n: number) => String(n).padStart(2, "0");
+  const { start, end } = monthRange(new Date());
+
+  const [settings, monthShifts] = await Promise.all([
+    getPaySettings(user.id),
+    prisma.shift.findMany({
+      where: { userId: user.id, startTime: { gte: start, lt: end } },
+      select: { startTime: true, endTime: true, breakMinutes: true },
+    }),
+  ]);
 
   return (
     <Screen>
@@ -37,22 +46,8 @@ export default async function SystemPage() {
         </form>
       </Panel>
 
-      <h2 className="mt-1"><Label>LOON</Label></h2>
-      <Panel className="flex min-h-[52px] items-center justify-between px-3.5">
-        <span className="font-medium">Uurloon (bruto)</span>
-        <span className="font-mono font-bold text-gold">{formatEuro(hourlyWage)}</span>
-      </Panel>
-
-      <h2 className="mt-1"><Label>BONUSREGELS</Label></h2>
-      <Panel className="flex min-h-14 items-center gap-2.5 px-3.5">
-        <div className="flex flex-col gap-0.5">
-          <span className="font-semibold">Nachtbonus</span>
-          <span className="font-mono text-[11px] text-muted">
-            {pad(nightStartHour)}:00 – {pad(nightEndHour)}:00 · ELKE DAG
-          </span>
-        </div>
-        <span className="ml-auto font-mono font-bold text-glow">+{Math.round(nightBonus * 100)}%</span>
-      </Panel>
+      <h2 className="mt-1"><Label>LOON EN TOESLAG</Label></h2>
+      <PaySettingsForm current={settings} monthShifts={monthShifts} />
 
       <h2 className="mt-1"><Label>SPELREGELS</Label></h2>
       <Panel className="flex min-h-[52px] items-center justify-between px-3.5">
@@ -63,7 +58,7 @@ export default async function SystemPage() {
       <div className="mt-2 flex items-center gap-2.5 rounded-md border border-dashed border-line px-3 py-2.5">
         <Echo size={32} />
         <p className="text-[13px] leading-snug text-soft">
-          Deze instellingen kun je binnenkort zelf aanpassen. Daarna volgen de agenda-koppeling en de CSV-export.
+          Binnenkort: de agenda-koppeling met je iPhone en een export naar CSV.
         </p>
       </div>
     </Screen>

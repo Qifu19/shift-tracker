@@ -1,7 +1,8 @@
 import { prisma } from "@/lib/prisma";
 import { requireUser } from "@/lib/auth";
+import { getPaySettings } from "@/lib/settings";
 import type { Shift } from "@/generated/prisma/client";
-import { addDays, formatEuro, formatLocal, isNightShift, localDate, monthRange, shiftPay } from "@/lib/shifts";
+import { addDays, formatEuro, formatLocal, isNightShift, localDate, monthRange, shiftPay, type PaySettings } from "@/lib/shifts";
 import { EchoMessage } from "@/components/system/Echo";
 import { Label, Panel } from "@/components/system/Panel";
 import { Screen } from "@/components/system/Screen";
@@ -14,10 +15,13 @@ export default async function QuestsPage() {
   const now = new Date();
   const { start, end } = monthRange(now);
 
-  const shifts = await prisma.shift.findMany({
-    where: { userId: user.id, startTime: { gte: start, lt: end } },
-    orderBy: { startTime: "asc" },
-  });
+  const [shifts, settings] = await Promise.all([
+    prisma.shift.findMany({
+      where: { userId: user.id, startTime: { gte: start, lt: end } },
+      orderBy: { startTime: "asc" },
+    }),
+    getPaySettings(user.id),
+  ]);
 
   const weeks = groupByWeek(shifts);
   const overdue = shifts.filter((s) => s.status === "PLANNED" && s.endTime < now).length;
@@ -50,7 +54,7 @@ export default async function QuestsPage() {
             </span>
           </h2>
           {week.shifts.map((shift) => (
-            <QuestCard key={shift.id} shift={shift} now={now} />
+            <QuestCard key={shift.id} shift={shift} now={now} settings={settings} />
           ))}
         </section>
       ))}
@@ -58,11 +62,11 @@ export default async function QuestsPage() {
   );
 }
 
-function QuestCard({ shift, now }: { shift: Shift; now: Date }) {
-  const pay = shiftPay(shift);
+function QuestCard({ shift, now, settings }: { shift: Shift; now: Date; settings: PaySettings }) {
+  const pay = shiftPay(shift, settings);
   const done = shift.status === "WORKED";
   const overnight = localDate(shift.endTime) !== localDate(shift.startTime);
-  const kind = isNightShift(shift) ? "NACHTDIENST" : "DIENST";
+  const kind = isNightShift(shift, settings) ? "NACHTDIENST" : "DIENST";
   // Alleen quests die al begonnen zijn kun je voltooien.
   const canComplete = !done && shift.startTime <= now;
 

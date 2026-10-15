@@ -1,7 +1,7 @@
 "use client";
 
 import { useActionState, useState } from "react";
-import { formatEuro, formatHours, formatLocal, shiftPay, toShiftMoments } from "@/lib/shifts";
+import { formatEuro, formatHours, formatLocal, shiftPay, toShiftMoments, type PaySettings } from "@/lib/shifts";
 import { EchoMessage } from "@/components/system/Echo";
 import { Label, Panel } from "@/components/system/Panel";
 import { createQuest, type QuestFormState } from "../actions";
@@ -14,7 +14,7 @@ const fieldClass =
   "h-12 w-full rounded-md border border-line bg-panel px-3 text-base text-ink focus:border-glow focus:outline-none";
 const inputClass = `${fieldClass} font-mono`;
 
-export function QuestForm({ today }: { today: string }) {
+export function QuestForm({ today, settings }: { today: string; settings: PaySettings }) {
   const [state, formAction, pending] = useActionState<QuestFormState, FormData>(createQuest, {});
   const [status, setStatus] = useState<"PLANNED" | "WORKED">("PLANNED");
   const [date, setDate] = useState(today);
@@ -24,7 +24,7 @@ export function QuestForm({ today }: { today: string }) {
 
   const valid = date && start && end && Number(breakMinutes) >= 0;
   const moments = valid ? toShiftMoments(date, start, end) : null;
-  const pay = moments ? shiftPay({ ...moments, breakMinutes: Number(breakMinutes) }) : null;
+  const pay = moments ? shiftPay({ ...moments, breakMinutes: Number(breakMinutes) }, settings) : null;
 
   return (
     <form action={formAction} className="flex flex-col gap-3.5">
@@ -89,8 +89,8 @@ export function QuestForm({ today }: { today: string }) {
       {pay && (
         <Panel className="flex flex-col gap-2 p-3.5" >
           <Label className="text-glow">BELONING</Label>
-          <Row label={`Basis · ${formatHours(pay.workedHours)} u`} value={formatEuro(pay.base)} />
-          <Row label={`Nachtbonus · ${formatHours(pay.nightHours)} u`} value={formatEuro(pay.bonus)} />
+          <Row label={`Basis · ${formatHours(pay.workedHours)} u × ${formatEuro(settings.hourlyWage)}`} value={formatEuro(pay.base)} />
+          <Row label={`Nachtbonus · ${formatHours(pay.nightHours)} u × ${Math.round(settings.nightBonus * 100)}%`} value={formatEuro(pay.bonus)} />
           <Row label="Ervaring" value={`+${Math.floor(pay.workedHours)} EXP`} glow />
           <div className="h-px bg-line" />
           <div className="flex items-baseline justify-between">

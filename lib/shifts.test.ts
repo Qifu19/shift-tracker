@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { levelFromHours, rankForLevel } from "./game";
+import { parsePaySettings, toInput } from "./pay-settings";
 import { nightMinutes, shiftPay, toShiftMoments, workedMinutes } from "./shifts";
 
 function shift(date: string, start: string, end: string, breakMinutes = 0) {
@@ -70,5 +71,48 @@ describe("spelregels", () => {
     expect(rankForLevel(7)).toBe("D");
     expect(rankForLevel(12)).toBe("C");
     expect(rankForLevel(30)).toBe("S");
+  });
+});
+
+describe("eigen instellingen", () => {
+  const custom = { hourlyWage: 16.5, nightBonus: 0.5, nightStartHour: 23, nightEndHour: 7 };
+
+  it("rekent met een ander uurloon, percentage en nachtvenster", () => {
+    // 22:00–06:30 met 30 min pauze; nacht is nu 23:00–07:00 → 7,5 u overlap − 0,5 u pauze = 7 u.
+    const pay = shiftPay(shift("2026-10-13", "22:00", "06:30", 30), custom);
+    expect(pay.nightHours).toBe(7);
+    expect(pay.base).toBe(132); // 8 u × € 16,50
+    expect(pay.bonus).toBe(57.75); // 7 u × € 16,50 × 50%
+  });
+
+  it("werkt met een nachtvenster dat na middernacht begint", () => {
+    const early = { ...custom, nightStartHour: 0, nightEndHour: 6 };
+    expect(nightMinutes(shift("2026-10-13", "22:00", "06:30"), early)).toBe(6 * 60);
+  });
+});
+
+describe("parsePaySettings", () => {
+  const valid = { hourlyWage: "15,50", nightBonusPercent: "30", nightStartHour: "22", nightEndHour: "6" };
+
+  it("leest een Nederlands bedrag met komma", () => {
+    expect(parsePaySettings(valid).settings).toEqual({
+      hourlyWage: 15.5,
+      nightBonus: 0.3,
+      nightStartHour: 22,
+      nightEndHour: 6,
+    });
+  });
+
+  it("weigert ongeldige invoer met een duidelijke melding", () => {
+    expect(parsePaySettings({ ...valid, hourlyWage: "abc" }).error).toMatch(/uurloon/);
+    expect(parsePaySettings({ ...valid, hourlyWage: "15,555" }).error).toMatch(/uurloon/);
+    expect(parsePaySettings({ ...valid, hourlyWage: "0" }).error).toMatch(/uurloon/);
+    expect(parsePaySettings({ ...valid, nightBonusPercent: "12.5" }).error).toMatch(/percentage/);
+    expect(parsePaySettings({ ...valid, nightEndHour: "22" }).error).toMatch(/verschillen/);
+  });
+
+  it("zet instellingen om naar formuliertekst en terug", () => {
+    const settings = parsePaySettings(valid).settings!;
+    expect(parsePaySettings(toInput(settings)).settings).toEqual(settings);
   });
 });

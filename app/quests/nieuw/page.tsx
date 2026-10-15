@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { requireUser } from "@/lib/auth";
+import { getPaySettings } from "@/lib/settings";
 import { localDate } from "@/lib/shifts";
 import { Screen } from "@/components/system/Screen";
 import { QuestForm } from "./QuestForm";
@@ -7,7 +8,8 @@ import { QuestForm } from "./QuestForm";
 export const dynamic = "force-dynamic";
 
 export default async function NewQuestPage() {
-  await requireUser();
+  const user = await requireUser();
+  const settings = await getPaySettings(user.id);
 
   return (
     <Screen nav={false}>
@@ -20,7 +22,7 @@ export default async function NewQuestPage() {
       </header>
 
       {/* De datum van vandaag bepalen we op de server, zodat server en browser hetzelfde tonen. */}
-      <QuestForm today={localDate(new Date())} />
+      <QuestForm today={localDate(new Date())} settings={settings} />
     </Screen>
   );
 }

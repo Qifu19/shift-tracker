@@ -21,7 +21,7 @@ Daarom bouw ik deze app: een probleem uit mijn eigen werk, en tegelijk een manie
 - [x] Rooster invoeren: geplande diensten (datum, begintijd, eindtijd, pauze)
 - [ ] Diensten markeren als gewerkt, met de werkelijke tijden
 - [x] Overzicht van gewerkte uren per week en per maand
-- [ ] Automatische berekening van nachttoeslag met instelbare regels
+- [x] Automatische berekening van nachttoeslag met instelbare regels
 - [x] Salarisoverzicht: bruto verdiend tot nu toe deze maand
 - [x] Prognose: verwacht bruto maandtotaal als alle geplande diensten gewerkt worden
 - [ ] Agenda-koppeling: rooster als abonnement in de iPhone-agenda (iCal-feed)

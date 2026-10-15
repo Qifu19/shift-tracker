@@ -1,4 +1,4 @@
-import { addDays, formatLocal, isNightShift, localDate, type ShiftTimes } from "./shifts";
+import { addDays, formatLocal, isNightShift, localDate, type PaySettings, type ShiftTimes } from "./shifts";
 
 // De spelregels. Ook hier alleen pure functies: gewerkte uren erin,
 // level, rang en titel eruit.
@@ -24,8 +24,8 @@ export function rankForLevel(level: number): Rank {
 }
 
 /** Een titel als beloning voor een mijlpaal. */
-export function titleFor(workedShifts: ShiftTimes[]) {
-  const nights = workedShifts.filter(isNightShift).length;
+export function titleFor(workedShifts: ShiftTimes[], settings: PaySettings) {
+  const nights = workedShifts.filter((shift) => isNightShift(shift, settings)).length;
   if (nights >= 10) return "Nachtwacht";
   if (nights >= 3) return "Nachtuil";
   if (workedShifts.length >= 1) return "Rekruut";
@@ -33,7 +33,11 @@ export function titleFor(workedShifts: ShiftTimes[]) {
 }
 
 /** Wat ECHO zegt op het Status-scherm. */
-export function echoMessage(nextShift: ShiftTimes | undefined, now: Date): { mood: EchoMood; text: string } {
+export function echoMessage(
+  nextShift: ShiftTimes | undefined,
+  now: Date,
+  settings: PaySettings,
+): { mood: EchoMood; text: string } {
   if (!nextShift) {
     return { mood: "neutraal", text: "Geen open quests. Voeg je rooster toe met de knop +." };
   }
@@ -46,7 +50,7 @@ export function echoMessage(nextShift: ShiftTimes | undefined, now: Date): { moo
     return { mood: "waarschuwing", text: `Je quest start vandaag om ${time}. Succes, speler.` };
   }
   if (shiftDay === addDays(today, 1)) {
-    return isNightShift(nextShift)
+    return isNightShift(nextShift, settings)
       ? { mood: "waarschuwing", text: `Morgen een nachtquest om ${time}. Slaap vandaag goed.` }
       : { mood: "neutraal", text: `Je volgende quest start morgen om ${time}.` };
   }
