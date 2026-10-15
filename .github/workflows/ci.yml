@@ -1,0 +1,55 @@
+# De testpipeline: bij elke push en elke pull request naar main controleert
+# GitHub of alles nog werkt. Vercel blijft zelf deployen; deze pipeline zorgt
+# dat je een groen of rood vinkje ziet voordat je fouten live zet.
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+# Een nieuwe push annuleert een run die nog bezig is voor dezelfde branch.
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  check:
+    name: Lint, test en build
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+
+    steps:
+      - name: Code ophalen
+        uses: actions/checkout@v7
+
+      - name: Node.js installeren
+        uses: actions/setup-node@v7
+        with:
+          node-version: 24
+          cache: npm
+
+      # npm ci installeert precies de versies uit package-lock.json
+      # en draait daarna "prisma generate" via het postinstall-script.
+      - name: Pakketten installeren
+        run: npm ci
+
+      - name: Lint
+        run: npm run lint
+
+      - name: Unit tests
+        run: npm test
+
+      # De build controleert ook alle TypeScript-types.
+      # Er is geen database nodig: alle pagina's worden pas bij een bezoek opgebouwd.
+      # Better Auth wil wel een sleutel zien. Dit is een nepsleutel die alleen
+      # hier gebruikt wordt; je echte sleutel staat in .env en bij Vercel.
+      - name: Build
+        run: npm run build
+        env:
+          BETTER_AUTH_SECRET: ci-only-placeholder-not-a-real-secret-0000
+          BETTER_AUTH_URL: http://localhost:3000

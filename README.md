@@ -1,5 +1,7 @@
 # Shift Tracker
 
+[![CI](https://github.com/Qifu19/shift-tracker/actions/workflows/ci.yml/badge.svg)](https://github.com/Qifu19/shift-tracker/actions/workflows/ci.yml)
+
 Een webapp om je werkrooster, gewerkte uren en nachttoeslag bij te houden.
 
 🔗 **Live:** [https://shift-tracker-amber.vercel.app/](https://shift-tracker-amber.vercel.app/) 
